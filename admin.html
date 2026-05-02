@@ -1,0 +1,155 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Login</title>
+
+    <!-- Font Awesome for eye icon -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+    <style>
+        * {
+             box-sizing: border-box;
+         }
+        .input-group input {
+        width: 100%;
+        padding: 10px;
+        padding-right: 40px;
+        border-radius: 5px;
+        border: 1px solid #ccc;
+        }
+        body {
+            height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            background: url(images/ss4.jpg);
+            /*background: linear-gradient(to right, #76772a, #414345);*/
+            font-family: Arial;
+        }
+
+        .admin-box {
+            background: #fff;
+            padding: 30px;
+            width: 320px;
+            border-radius: 10px;
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.3);
+            
+        }
+
+        .input-group {
+            position: relative;
+            margin: 10px 0;
+        }
+
+        input {
+            width: 100%;
+            padding: 10px;
+            padding-right: 40px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+        }
+
+        .toggle-icon {
+            position: absolute;
+            right: 10px;
+            top: 12px;
+            cursor: pointer;
+            color: #555;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background: #333;
+            color: #fff;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        button:hover {
+            background: #555;
+        }
+
+        #error {
+            color: red;
+            font-size: 14px;
+            margin-top: 5px;
+        }
+    </style>
+</head>
+
+<body>
+
+<div class="admin-box">
+    <h2>Admin Login</h2>
+
+    <form onsubmit="return validateForm()">
+
+        <!-- Email -->
+        <div class="input-group">
+            <input type="email" id="email" placeholder="Admin Email"
+            pattern="^[a-zA-Z0-9._%+-]+@gmail\.com$"
+            title="Enter a valid Gmail address (example@gmail.com)"
+            required>
+        </div>
+
+        <!-- Password -->
+        <div class="input-group">
+            <input type="password" id="password" placeholder="Password" required>
+            <span onclick="togglePassword()" id="eyeIcon" class="fas fa-eye toggle-icon"></span>
+        </div>
+
+        <!-- Error -->
+        <p id="error"></p>
+
+        <button type="submit">Login</button>
+
+    </form>
+</div>
+
+<script>
+function togglePassword() {
+    var pass = document.getElementById("password");
+    var icon = document.getElementById("eyeIcon");
+
+    if (pass.type === "password") {
+        pass.type = "text";
+        icon.classList.remove("fa-eye");
+        icon.classList.add("fa-eye-slash");
+    } else {
+        pass.type = "password";
+        icon.classList.remove("fa-eye-slash");
+        icon.classList.add("fa-eye");
+    }
+}
+function validateForm() {
+    let formData = new FormData();
+
+    formData.append("email", document.getElementById("email").value);
+    formData.append("password", document.getElementById("password").value);
+
+    fetch("backend/admin_login.php", {
+        method: "POST",
+        body: formData
+    })
+    .then(res => res.text())
+    .then(data => {
+        if (data.trim() === "success") {
+            alert("Admin login successful");
+            window.location.href = "admin/admin_dashboard.php";
+        } else {
+            document.getElementById("error").innerText = "Invalid admin credentials";
+        }
+    });
+
+    return false;
+}
+</script>
+
+</body>
+</html>

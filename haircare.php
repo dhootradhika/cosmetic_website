@@ -1,0 +1,320 @@
+<?php
+include("db.php"); // database connection
+?>
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Haircare</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@600&family=Poppins&display=swap" rel="stylesheet">
+
+<style>
+*{
+    margin:0;
+    padding:0;
+    box-sizing:border-box;
+    font-family:'Poppins',sans-serif;
+}
+
+body{
+    background: linear-gradient(135deg,#ffe0ec,#f8cdda,#e0c3fc);
+    padding:20px;
+}
+
+h1{
+    text-align:center;
+    font-family:'Playfair Display',serif;
+    font-size:42px;
+    color:#5a189a;
+}
+
+.subtitle{
+    text-align:center;
+    margin-bottom:20px;
+    color:#444;
+}
+
+.back{
+    text-decoration:none;
+    color:#5a189a;
+    font-weight:bold;
+}
+
+/* Controls */
+.controls{
+    text-align:center;
+    margin:20px;
+}
+
+input,select{
+    padding:10px;
+    border-radius:20px;
+    border:none;
+    outline:none;
+    box-shadow:0 4px 10px rgba(0,0,0,0.1);
+}
+
+/* Grid */
+.container{
+    display:grid;
+    grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+    gap:25px;
+}
+
+/* Card */
+.card{
+    background:rgba(255,255,255,0.6);
+    backdrop-filter:blur(15px);
+    border-radius:20px;
+    padding:15px;
+    box-shadow:0 10px 30px rgba(0,0,0,0.2);
+    transition:0.4s;
+    position:relative;
+    overflow:hidden;
+}
+
+/* Shine animation */
+.card::before{
+    content:'';
+    position:absolute;
+    width:100%;
+    height:100%;
+    background:linear-gradient(120deg,transparent,rgba(255,255,255,0.5),transparent);
+    top:-100%;
+    transition:0.5s;
+}
+
+.card:hover::before{
+    top:100%;
+}
+
+.card:hover{
+    transform:translateY(-10px) scale(1.03);
+}
+
+.card img{
+    width:100%;
+    height:230px;
+    object-fit:cover;
+    border-radius:15px;
+}
+
+.card h3{
+    margin:10px 0;
+    color:#5a189a;
+}
+
+.price{
+    color:#ff006e;
+    font-weight:bold;
+}
+
+/* Buttons */
+.actions{
+    display:flex;
+    justify-content:space-between;
+    margin-top:10px;
+}
+
+button{
+    padding:8px 12px;
+    border:none;
+    border-radius:20px;
+    cursor:pointer;
+}
+
+.cart{
+    background:#5a189a;
+    color:white;
+}
+
+.wishlist{
+    background:#ff4d6d;
+    color:white;
+}
+
+.wishlist.active{
+    background:black;
+}
+
+.remove{
+    background:#222;
+    color:white;
+}
+</style>
+</head>
+
+<body>
+
+<a href="products.html" class="back">⬅ Back</a>
+
+<h1>💇‍♀️ Haircare Collection</h1>
+<p class="subtitle">Strong, shiny & beautiful hair starts here</p>
+
+<!-- SEARCH + FILTER -->
+<div class="controls">
+    <input type="text" id="search" placeholder="Search..." onkeyup="filterProducts()">
+    
+    <select id="priceFilter" onchange="filterProducts()">
+        <option value="all">All Prices</option>
+        <option value="500">Below ₹500</option>
+        <option value="1000">Below ₹1000</option>
+    </select>
+</div>
+
+<div class="container">
+
+<?php
+$result = mysqli_query($conn, "SELECT * FROM products WHERE category='Haircare'");
+
+if(mysqli_num_rows($result) > 0){
+    while($row = mysqli_fetch_assoc($result)){
+?>
+
+<div class="card" data-price="<?php echo $row['price']; ?>">
+    <img src="<?php echo $row['image']; ?>">
+    <h3><?php echo $row['name']; ?></h3>
+    <p class="price">₹<?php echo $row['price']; ?></p>
+
+    <div class="actions">
+        <button class="cart" onclick="addToCart(<?php echo $row['id']; ?>, <?php echo $row['price']; ?>)">
+            Add
+        </button>
+        
+        <button class="wishlist" 
+        onclick='toggleWishlist(this, <?php echo json_encode($row["name"]); ?>, <?php echo $row["price"]; ?>)'>
+        ❤</button>
+        
+        <button class="remove" onclick="removeFromCart('<?php echo $row['name']; ?>')">Remove</button>
+    </div>
+</div>
+
+<?php
+    }
+} else {
+    echo "<p>No haircare products found</p>";
+}
+?>
+
+</div>
+
+<script>
+// ADD TO CART
+function addToCart(productId, price){
+
+    fetch("backend/add_to_cart.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `id=${productId}&price=${price}`
+    })
+    .then(res => res.text())
+    .then(data => {
+
+        console.log(data);
+
+        if(data.trim() === "success"){
+            alert("Added to cart!");
+        }
+        else if(data.trim() === "not_logged_in"){
+            alert("Please login first!");
+            window.location.href = "login.html";
+        }
+        else{
+            alert(data);
+        }
+    });
+}
+
+// REMOVE
+function removeFromCart(productId){
+
+    fetch("backend/remove_from_cart.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `id=${productId}`
+    })
+    .then(res => res.text())
+    .then(data => {
+
+        if(data.trim() === "success"){
+            alert("Removed from cart!");
+        }
+        else if(data.trim() === "not_logged_in"){
+            alert("Please login first!");
+            window.location.href = "login.html";
+        }
+        else{
+            alert(data);
+        }
+    });
+}
+
+// WISHLIST
+function toggleWishlist(btn, name, price){
+
+    fetch("backend/add_wishlist.php", {
+        method: "POST",
+        headers: {
+            "Content-Type": "application/x-www-form-urlencoded"
+        },
+        body: `name=${name}&price=${price}`
+    })
+    .then(res => res.text())
+    .then(data => {
+        console.log(data);
+
+        if(data === "success"){
+            btn.classList.add("active");
+            alert("Added to wishlist!");
+        } else if(data === "removed"){
+            btn.classList.remove("active");
+            alert("Removed from wishlist!");
+        } else {
+            alert(data);
+        }
+    });
+
+}
+
+// FILTER
+function filterProducts(){
+    let search=document.getElementById("search").value.toLowerCase();
+    let price=document.getElementById("priceFilter").value;
+    let cards=document.querySelectorAll(".card");
+
+    cards.forEach(card=>{
+        let text=card.innerText.toLowerCase();
+        let cardPrice=parseInt(card.dataset.price);
+
+        let matchSearch=text.includes(search);
+        let matchPrice=(price==="all"||cardPrice<=price);
+
+        card.style.display=(matchSearch && matchPrice)?"":"none";
+    });
+}
+
+// LOAD WISHLIST STATE
+window.onload = function () {
+    let user = localStorage.getItem("user");
+    let wishlist = JSON.parse(localStorage.getItem("wishlist_" + user)) || [];
+
+    document.querySelectorAll(".card").forEach(card => {
+        let name = card.querySelector("h3").innerText;
+        let btn = card.querySelector(".wishlist");
+
+        if (wishlist.find(item => item.name === name)) {
+            btn.classList.add("active");
+        }
+    });
+};
+</script>
+
+</body>
+</html>
